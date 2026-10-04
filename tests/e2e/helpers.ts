@@ -105,3 +105,32 @@ export async function exportState(page: Page, id: string) {
     result: { winnerAllianceId: string | null; tiebreak: string } | null;
   };
 }
+
+/**
+ * Füllt ein Feld, bis die zugehörige Schaltfläche aktiv ist. Direkt nach dem Laden kann React beim Hydrieren ein
+ * eben getipptes Feld noch leeren – dann einfach erneut tippen.
+ */
+export async function fillUntilEnabled(input: ReturnType<Page['locator']>, value: string, button: ReturnType<Page['locator']>) {
+  await expect(async () => {
+    await input.fill(value);
+    await expect(button).toBeEnabled({ timeout: 1_000 });
+  }).toPass({ timeout: 30_000 });
+}
+
+/**
+ * Schaltet mit „Weiter …“ zum nächsten Schritt und wartet auf `text`. Bleibt der Schritt unter Last unverändert
+ * (Klick fiel in eine laufende Aktion), wird erneut geklickt – aber nur dann, damit nie ein Schritt übersprungen wird.
+ */
+export async function advanceTo(page: Page, text: string) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const before = await stage(page);
+    await act(page, /^Weiter/);
+    const changed = await expect
+      .poll(async () => await stage(page), { timeout: 15_000 })
+      .not.toBe(before)
+      .then(() => true)
+      .catch(() => false);
+    if (changed) break;
+  }
+  await expectStage(page, text);
+}

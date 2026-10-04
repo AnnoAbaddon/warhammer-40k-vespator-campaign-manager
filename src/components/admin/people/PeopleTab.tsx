@@ -53,7 +53,7 @@ export function PeopleTab() {
 }
 
 export function AlliancesSection() {
-  const { state, revision } = useCmd();
+  const { state } = useCmd();
   const t = useT();
   const [edit, setEdit] = useState<string | null>(null);
   const canCreate = state.stage.kind === 'SETUP' && state.stage.step === 'W0' && state.alliances.length < state.meta.allianceCount;
@@ -77,7 +77,7 @@ export function AlliancesSection() {
               }
             >
               {edit === a.id ? (
-                <AllianceEditor key={revision} alliance={a} onDone={() => setEdit(null)} />
+                <AllianceEditor key={JSON.stringify(a)} alliance={a} onDone={() => setEdit(null)} />
               ) : (
                 <div className="flex gap-3 text-[15px]">
                   {logo && (
@@ -115,7 +115,7 @@ export function AlliancesSection() {
         })}
         {canCreate && (
           <Panel title={t('Neue Allianz')} icon={<GameIcon name="em_crown" size={18} />}>
-            <AllianceEditor key={`new-${revision}`} showLeader={false} />
+            <AllianceEditor key={`new-${state.alliances.length}`} showLeader={false} />
           </Panel>
         )}
       </div>
@@ -124,7 +124,7 @@ export function AlliancesSection() {
 }
 
 export function PlayersSection() {
-  const { state, run, revision, campaignId } = useCmd();
+  const { state, run, campaignId } = useCmd();
   const t = useT();
   const [edit, setEdit] = useState<string | null>(null);
   // Anlegen ist eingeklappt: 'quick' = Kurzformular, 'full' = alle Angaben
@@ -194,7 +194,7 @@ export function PlayersSection() {
               {adding === 'quick' ? t('Alle Angaben erfassen') : t('Kurzformular')}
             </button>
           </div>
-          {adding === 'quick' ? <QuickPlayerForm /> : <PlayerEditor key={`new-${revision}`} onDone={() => setAdding(null)} />}
+          {adding === 'quick' ? <QuickPlayerForm /> : <PlayerEditor key={`new-${state.players.length}`} onDone={() => setAdding(null)} />}
         </div>
       )}
 
@@ -266,9 +266,9 @@ export function PlayersSection() {
             </button>
           </div>
           <div className="@container relative z-[1] divide-y divide-line/60 [&>*]:py-4 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
-            <PlayerEditor key={`${editing.id}-${revision}`} player={editing} onDone={() => setEdit(null)} />
+            <PlayerEditor key={JSON.stringify(editing)} player={editing} onDone={() => setEdit(null)} />
             <PlayerLink playerId={editing.id} />
-            <CommanderEditor key={`cmd-${editing.id}-${revision}`} player={editing} />
+            <CommanderEditor key={`cmd-${JSON.stringify(editing)}`} player={editing} />
             {/* P2: Bemal-Chronik (D5) */}
             <HobbyAdmin player={editing} />
             {/* P3: Order of Battle (Crusade) */}
@@ -324,7 +324,7 @@ function currentPhaseFor(state: ReturnType<typeof useCmd>['state']): number {
 }
 
 export function FleetsSection() {
-  const { state, run, revision } = useCmd();
+  const { state, run } = useCmd();
   const t = useT();
   const phase = currentPhaseFor(state);
   const [names, setNames] = useState<Record<string, string>>({});
@@ -337,9 +337,9 @@ export function FleetsSection() {
           return (
             <Panel key={a.id} title={<AllianceTag alliance={a} />}>
               <div className="mb-3">
-                <FleetCountControl key={`${a.id}-${fleets.length}-${revision}`} allianceId={a.id} />
+                <FleetCountControl key={`${a.id}-${fleets.length}`} allianceId={a.id} />
                 <div className="mt-2">
-                  <ReserveControl key={`r-${a.id}-${fleets.length}-${revision}`} allianceId={a.id} />
+                  <ReserveControl key={`r-${a.id}-${fleets.length}-${fleets.filter((f) => f.reserve).length}`} allianceId={a.id} />
                 </div>
               </div>
               {fleets.length ? (

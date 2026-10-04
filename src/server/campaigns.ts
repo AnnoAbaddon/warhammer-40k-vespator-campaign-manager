@@ -264,7 +264,7 @@ export function runCommand(campaignId: string, baseRev: number, cmd: Command, op
       try {
         backupCampaign(campaignId);
       } catch (e) {
-        console.error(`Backup nach Phasenabschluss (${campaignId}) fehlgeschlagen`, e);
+        console.error('Backup nach Phasenabschluss fehlgeschlagen:', campaignId, e);
         recordError(`Backup nach Phasenabschluss ${campaignId}`, e);
       }
     });

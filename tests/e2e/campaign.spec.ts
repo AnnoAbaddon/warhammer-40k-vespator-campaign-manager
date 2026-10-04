@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import fs from 'node:fs';
-import { SETUP_TOKEN } from './helpers';
+import { SETUP_TOKEN, advanceTo } from './helpers';
 
 const demo = () => JSON.parse(fs.readFileSync('.e2e/demo.json', 'utf8')) as { id: string; token: string };
 
@@ -97,14 +97,11 @@ test.describe.serial('Kampagne', () => {
     await page.goto(`/admin/c/${id}`);
     await expectStage(page, 'Operationen wählen');
 
-    await act(page, /^Weiter/); // fehlende Befehle → Logistical Auxilia (Warnung)
-    await expectStage(page, 'Reveal');
+    await advanceTo(page, 'Reveal');
     await act(page, 'Operationen aufdecken');
-    await act(page, /^Weiter/);
-    await expectStage(page, 'Edifice Raising');
+    await advanceTo(page, 'Edifice Raising');
     await act(page, 'Bauen ausführen');
-    await act(page, /^Weiter/);
-    await expectStage(page, 'Schlachten laufen');
+    await advanceTo(page, 'Schlachten laufen');
 
     // Ergebnis für Purge and Burn eintragen
     // die Übersicht „Handlungsbedarf“ zeigt dieselbe Schlacht – den Eintrag der Schlachtenliste öffnen
@@ -123,16 +120,13 @@ test.describe.serial('Kampagne', () => {
     await seize.selectOption('VOID');
     await settle(page);
 
-    await act(page, /^Weiter/); // Orbital Invasion ungespielt → Angreifer siegt
-    await expectStage(page, 'Ergebnisse verarbeiten');
+    await advanceTo(page, 'Ergebnisse verarbeiten');
     await act(page, 'Alle verarbeiten');
-    await act(page, /^Weiter/);
-    await expectStage(page, 'Fleet Arrival');
+    await advanceTo(page, 'Fleet Arrival');
     await act(page, 'Void Leaps ausführen');
     await act(page, /^Weiter/);
     await act(page, 'Kill Teams auswerten');
-    await act(page, /^Weiter/);
-    await expectStage(page, 'Punkte & Events');
+    await advanceTo(page, 'Punkte & Events');
     await act(page, 'Punkte berechnen');
     await act(page, 'Events generieren');
     for (let i = 0; i < 5; i++) {
@@ -141,11 +135,9 @@ test.describe.serial('Kampagne', () => {
       await discard.first().click();
       await settle(page);
     }
-    await act(page, /^Weiter/);
-    await expectStage(page, 'Flotten bewegen');
+    await advanceTo(page, 'Flotten bewegen');
     await act(page, 'Bewegungen ausführen');
-    await act(page, /^Weiter/);
-    await expectStage(page, 'Infrastruktur bauen');
+    await advanceTo(page, 'Infrastruktur bauen');
     await act(page, 'Reihenfolge bestimmen');
     for (let i = 0; i < 3; i++) await act(page, 'Verzichten');
     await act(page, /Weiter/);

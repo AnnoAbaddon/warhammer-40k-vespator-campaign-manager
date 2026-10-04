@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { act, exportState, expectStage, login, scenarios, settle } from './helpers';
+import { act, exportState, expectStage, login, scenarios, settle, fillUntilEnabled } from './helpers';
 
 test.describe.serial('Kampagnenende und Folgekampagne', () => {
   test('Gleichstand → Entscheidungsschlacht → Sieger und Medaillen', async ({ page }) => {
@@ -42,7 +42,7 @@ test.describe.serial('Kampagnenende und Folgekampagne', () => {
     // Allianzen anlegen
     for (const name of ['Imperium II', 'Chaos II', 'Xenos II']) {
       const form = page.locator('section.hud:not(.frame)').filter({ hasText: 'Neue Allianz' });
-      await form.locator('input').first().fill(name);
+      await fillUntilEnabled(form.locator('input').first(), name, form.getByRole('button', { name: 'Allianz anlegen', exact: true }));
       await act(page, 'Allianz anlegen', form);
     }
     // übernommene Spieler zuordnen (Tab „Allianzen & Spieler“ → Spieler bearbeiten)

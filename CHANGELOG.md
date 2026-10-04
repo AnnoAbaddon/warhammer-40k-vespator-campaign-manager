@@ -47,4 +47,4 @@ The first public release. It runs a complete "War on the Vespator Front" map cam
 - Unofficial fan project, not affiliated with or endorsed by Games Workshop.
 - The decorative images were generated with an AI image model and are not covered by the MIT license; see [CREDITS.md](CREDITS.md).
 
-[1.0.0]: https://github.com/AnnoAbaddon/vespator-campaign-manager/releases/tag/v1.0.0
+[1.0.0]: https://github.com/AnnoAbaddon/warhammer-40k-vespator-campaign-manager/releases/tag/v1.0.0

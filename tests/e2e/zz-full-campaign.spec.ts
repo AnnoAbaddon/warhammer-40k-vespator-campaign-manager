@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type BrowserContext, type Locator, type Page } from '@playwright/test';
-import { act, expectStage, login, settle, stage } from './helpers';
+import { act, expectStage, login, settle, stage, fillUntilEnabled, advanceTo } from './helpers';
 
 /**
  * Kampagnen-E2E (NTH2 6.3): eine komplette, kurze Kampagne über die Oberfläche –
@@ -84,8 +84,7 @@ async function actIfPresent(page: Page, name: string, scope?: Locator) {
 
 /** Weiterschalten im Cockpit und auf die neue Stufe warten */
 async function advance(page: Page, next: string) {
-  await act(page, /^Weiter/);
-  await expectStage(page, next);
+  await advanceTo(page, next);
 }
 
 /** Spielerseite ohne Anmeldung öffnen (eigener Kontext = kein Admin-Cookie) */
@@ -146,7 +145,7 @@ test.describe.serial('Kampagnen-E2E: kurze Kampagne komplett über die Oberfläc
     // ── W0: Allianzen, Spieler, Flotten ──
     for (const name of ALLIANCES) {
       const form = page.locator('section.hud:not(.frame)').filter({ hasText: 'Neue Allianz' });
-      await form.locator('input').first().fill(name);
+      await fillUntilEnabled(form.locator('input').first(), name, form.getByRole('button', { name: 'Allianz anlegen', exact: true }));
       await act(page, 'Allianz anlegen', form);
     }
     for (const [nick, faction, al] of PLAYERS) {
@@ -158,8 +157,15 @@ test.describe.serial('Kampagnen-E2E: kurze Kampagne komplett über die Oberfläc
     }
     const fleetPanel = page.locator('section.hud:not(.frame)').filter({ hasText: 'Flotten je Allianz' });
     for (let i = 0; i < ALLIANCES.length; i++) {
-      await fleetPanel.getByLabel('Flottenzahl').nth(i).fill('2');
-      await act(page, 'Flotten setzen', fleetPanel.locator('div.slab').nth(i));
+      const slab = fleetPanel.locator('div.slab').nth(i);
+      // nach dem Speichern der vorigen Allianz lädt die Seite neu und kann ein eben ausgefülltes Feld zurücksetzen –
+      // deshalb wiederholen, bis die Flottenzahl wirklich übernommen ist
+      await expect(async () => {
+        await slab.getByLabel('Flottenzahl').fill('2');
+        const save = slab.getByRole('button', { name: 'Flotten setzen', exact: true });
+        if (await save.isEnabled()) await act(page, 'Flotten setzen', slab);
+        await expect(slab.getByText('aktuell 2')).toBeVisible({ timeout: 3_000 });
+      }).toPass({ timeout: 30_000 });
     }
     await expect(fleetPanel.getByText('aktuell 2')).toHaveCount(2);
     await advance(page, 'Setup · Strongholds & Power Level');

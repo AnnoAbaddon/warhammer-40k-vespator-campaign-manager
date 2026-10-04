@@ -19,7 +19,7 @@ import { useT } from '@/i18n/client';
 import { GameIcon } from '@/components/icons/GameIcon';
 
 export function W0() {
-  const { state, run, busy, revision } = useCmd();
+  const { state, run, busy } = useCmd();
   const t = useT();
   const unassigned = state.players.filter((p) => p.active && !currentAllianceOf(p));
   return (
@@ -55,7 +55,7 @@ export function W0() {
             {state.alliances.map((a) => (
               <div key={a.id} className="slab space-y-1.5 p-2.5">
                 <AllianceTag alliance={a} className="mb-1" />
-                <FleetCountControl key={`${a.id}-${revision}`} allianceId={a.id} />
+                <FleetCountControl key={`${a.id}-${state.fleets.filter((f) => f.allianceId === a.id).length}`} allianceId={a.id} />
               </div>
             ))}
           </div>

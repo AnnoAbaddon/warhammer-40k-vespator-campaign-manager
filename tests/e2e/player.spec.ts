@@ -20,8 +20,11 @@ test('Spielerlink: Befehl erteilen, Allianz-Notiz, Autor im Log', async ({ page,
   await page.getByRole('row').filter({ hasText: 'Konrad' }).getByRole('button', { name: 'Bearbeiten' }).click();
   await page.getByRole('button', { name: 'Link erzeugen' }).click();
   await settle(page);
-  const link = await page.locator('input[readonly]').filter({ hasText: '' }).evaluateAll((els) => (els as HTMLInputElement[]).map((e) => e.value).find((v) => v.includes('/p/')));
-  expect(link).toBeTruthy();
+  // der Link erscheint erst nach der Server-Antwort – warten, bis ein Feld ihn enthält
+  let link: string | undefined;
+  await expect
+    .poll(async () => (link = await page.locator('input[readonly]').evaluateAll((els) => (els as HTMLInputElement[]).map((e) => e.value).find((v) => v.includes('/p/')))), { timeout: 30_000 })
+    .toBeTruthy();
   const url = new URL(link!);
 
   // Spielerseite ohne Anmeldung

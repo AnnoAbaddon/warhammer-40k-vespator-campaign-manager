@@ -51,7 +51,7 @@ function initLevels(state: ReturnType<typeof useCmd>['state'], aid: string): Rec
 }
 
 function W2Choose() {
-  const { state, run, busy, revision } = useCmd();
+  const { state, run, busy } = useCmd();
   const su = state.setup;
   const [active, setActive] = useState(state.alliances[0]?.id ?? '');
   const t = useT();
@@ -77,7 +77,7 @@ function W2Choose() {
           <AllianceSwitch state={state} value={active} onChange={setActive} done={complete} />
         </div>
       </Panel>
-      {active && <AllianceLevels key={`${active}-${revision}`} allianceId={active} primary={!allDone} />}
+      {active && <AllianceLevels key={`${active}-${JSON.stringify(state.setup.strongholds[active] ?? null)}`} allianceId={active} primary={!allDone} />}
       <Panel>
         <div className="flex flex-wrap items-center gap-2">
           <button className={`btn ${allDone ? 'btn-primary' : ''}`} disabled={busy || !allDone} onClick={() => run({ type: 'SETUP_REVEAL_STRONGHOLDS' })}>

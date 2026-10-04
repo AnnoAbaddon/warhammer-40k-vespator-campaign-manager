@@ -461,7 +461,7 @@ export function remindBattle(campaignId: string, battleId: string, now = Date.no
  * Deadline-Erinnerungen 48 h und 12 h vorher – nur an Spieler mit offenen Aufgaben. Jede Kampagne einzeln: ein
  * Fehler in einer Kampagne hält die übrigen nicht auf (gemeldet über onError).
  */
-export function scanDeadlines(now = Date.now(), onError: (id: string, e: unknown) => void = (id, e) => console.error(`Deadlines ${id} fehlgeschlagen`, e)) {
+export function scanDeadlines(now = Date.now(), onError: (id: string, e: unknown) => void = (id, e) => console.error('Deadlines fehlgeschlagen:', id, e)) {
   const rows = db().prepare('SELECT id FROM campaign WHERE archived = 0 AND sandbox_of IS NULL').all() as { id: string }[];
   for (const { id } of rows) {
     let st: CampaignState;

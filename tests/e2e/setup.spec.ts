@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { act, exportState, expectStage, login } from './helpers';
+import { act, exportState, expectStage, login, fillUntilEnabled } from './helpers';
 
 const ALLIANCES = ['Rot', 'Blau', 'Grün'] as const;
 const PLAYERS: [string, string, (typeof ALLIANCES)[number]][] = [
@@ -49,7 +49,7 @@ test('Setup-Wizard komplett über die Oberfläche (3 Allianzen, 2 Phasen)', asyn
   // ── W0: Allianzen, Spieler, Flotten ──
   for (const name of ALLIANCES) {
     const form = page.locator('section.hud:not(.frame)').filter({ hasText: 'Neue Allianz' });
-    await form.locator('input').first().fill(name);
+    await fillUntilEnabled(form.locator('input').first(), name, form.getByRole('button', { name: 'Allianz anlegen', exact: true }));
     await act(page, 'Allianz anlegen', form);
   }
   for (const [nick, faction, al] of PLAYERS) {
@@ -108,14 +108,16 @@ test('Setup-Wizard komplett über die Oberfläche (3 Allianzen, 2 Phasen)', asyn
 
   // ── W4: Flotten-Startpositionen ──
   for (const [fleet, planet] of Object.entries(STARTS)) {
-    await page
-      .locator('div.flex')
-      .filter({ has: page.getByText(fleet, { exact: true }) })
-      .last()
-      .locator('select')
-      .selectOption(planet);
+    const select = page.locator('div.flex').filter({ has: page.getByText(fleet, { exact: true }) }).last().locator('select');
+    // unter Last kann die Auswahl vor dem Laden der Optionen verpuffen – bis der Wert wirklich steht wiederholen
+    await expect(async () => {
+      await select.selectOption(planet);
+      await expect(select).toHaveValue(planet, { timeout: 1_000 });
+    }).toPass({ timeout: 30_000 });
   }
+  await expect(page.getByRole('button', { name: 'Speichern (verdeckt)', exact: true }).first()).toBeEnabled();
   await act(page, 'Speichern (verdeckt)');
+  await expect(page.getByRole('button', { name: 'Aufdecken', exact: true }).first()).toBeEnabled({ timeout: 30_000 });
   await act(page, 'Aufdecken');
   await expect(page.getByText('W4 · Flotten aufgedeckt')).toBeVisible();
   await act(page, 'Weiter');

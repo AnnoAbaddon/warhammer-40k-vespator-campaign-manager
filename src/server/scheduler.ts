@@ -17,7 +17,7 @@ export async function runSafe(name: string, fn: () => unknown): Promise<boolean>
     await fn();
     return true;
   } catch (e) {
-    console.error(`Hintergrundaufgabe ${name} fehlgeschlagen`, e);
+    console.error('Hintergrundaufgabe fehlgeschlagen:', name, e);
     recordError(`Hintergrundaufgabe ${name}`, e);
     return false;
   }
@@ -25,7 +25,7 @@ export async function runSafe(name: string, fn: () => unknown): Promise<boolean>
 
 /** Fehler einer einzelnen Kampagne: melden, die übrigen laufen weiter */
 const campaignError = (task: string) => (id: string, e: unknown) => {
-  console.error(`Hintergrundaufgabe ${task} (${id}) fehlgeschlagen`, e);
+  console.error('Hintergrundaufgabe fehlgeschlagen:', task, id, e);
   recordError(`Hintergrundaufgabe ${task} ${id}`, e);
 };
 

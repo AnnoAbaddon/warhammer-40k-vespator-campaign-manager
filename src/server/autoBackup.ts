@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DATA_DIR, db, getSetting, setSetting } from './db';
 import { buildBackupZip, importBackup } from './backup';
+import { insideDir } from './safePath';
 
 /**
  * Automatische Backups (N5.1): täglich ein Komplett-ZIP je Kampagne unter `backups/`,
@@ -16,7 +17,7 @@ const KEEP_MANUAL = 5;
 
 function dirOf(campaignId: string) {
   if (!SAFE.test(campaignId)) throw new Error('Ungültige Kampagne');
-  return path.join(BACKUP_DIR, campaignId);
+  return insideDir(BACKUP_DIR, campaignId);
 }
 
 export function backupCampaign(campaignId: string, manual = false): { file: string; size: number } {
@@ -24,14 +25,14 @@ export function backupCampaign(campaignId: string, manual = false): { file: stri
   fs.mkdirSync(dir, { recursive: true });
   const { zip } = buildBackupZip(campaignId);
   const file = `${new Date().toISOString().slice(0, 23).replace(/[:.]/g, '-')}${manual ? '-manuell' : ''}.zip`;
-  const tmp = path.join(dir, `.${file}.tmp`);
+  const tmp = insideDir(dir, `.${file}.tmp`);
   fs.writeFileSync(tmp, zip);
-  fs.renameSync(tmp, path.join(dir, file));
+  fs.renameSync(tmp, insideDir(dir, file));
   // Rotation getrennt: 14 tägliche, 5 manuelle – manuelle Sicherungen verdrängen die täglichen nicht
   const all = listBackups(campaignId);
   const daily = all.filter((b) => !b.file.includes('-manuell'));
   const hand = all.filter((b) => b.file.includes('-manuell'));
-  for (const old of [...daily.slice(KEEP), ...hand.slice(KEEP_MANUAL)]) fs.rmSync(path.join(dir, old.file), { force: true });
+  for (const old of [...daily.slice(KEEP), ...hand.slice(KEEP_MANUAL)]) fs.rmSync(insideDir(dir, old.file), { force: true });
   return { file, size: zip.byteLength };
 }
 
@@ -44,7 +45,7 @@ export function listBackups(campaignId: string): { file: string; size: number; a
     .sort()
     .reverse()
     .map((f) => {
-      const st = fs.statSync(path.join(dir, f));
+      const st = fs.statSync(insideDir(dir, f));
       return { file: f, size: st.size, at: st.mtime.toISOString() };
     });
 }
@@ -52,7 +53,7 @@ export function listBackups(campaignId: string): { file: string; size: number; a
 /** Stellt ein Backup als neue Kampagne wieder her und liefert deren ID */
 export function restoreBackup(campaignId: string, file: string, author: string | null = null): string {
   if (!FILE.test(file)) throw new Error('Ungültige Datei');
-  const bytes = fs.readFileSync(path.join(dirOf(campaignId), file));
+  const bytes = fs.readFileSync(insideDir(dirOf(campaignId), file));
   const name = (db().prepare('SELECT name FROM campaign WHERE id = ?').get(campaignId) as { name: string } | undefined)?.name ?? 'Kampagne';
   // F4: die Kopie startet ohne Leseansicht (nicht in der Hall of Fame) – veröffentlichen ist eine bewusste Entscheidung
   return importBackup(new Uint8Array(bytes), `${name} (Wiederherstellung ${file.slice(0, 10)})`, { author, action: 'Backup wiederhergestellt', detail: `${name} · ${file}`, publicEnabled: false });
@@ -94,5 +95,5 @@ export function runDailyBackups(now = new Date(), onError: (id: string, e: unkno
 }
 
 function defaultBackupError(id: string, e: unknown) {
-  console.error(`Backup ${id} fehlgeschlagen`, e);
+  console.error('Backup fehlgeschlagen:', id, e);
 }

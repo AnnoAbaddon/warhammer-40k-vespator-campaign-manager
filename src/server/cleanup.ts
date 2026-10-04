@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { db, UPLOAD_DIR } from './db';
 import { BACKUP_DIR } from './autoBackup';
+import { insideDir } from './safePath';
 
 /**
  * Aufräumen beim Löschen einer Kampagne oder Sandbox: alles, was nicht per Fremdschlüssel mitgelöscht wird
@@ -52,7 +53,7 @@ export function deleteUploads(uploadIds: string[], ownerCampaigns: string[], opt
       removeUploadFile(row.file);
       removeUploadFile(row.thumb);
     } catch (e) {
-      console.error(`Upload ${id} konnte nicht gelöscht werden`, e);
+      console.error('Upload konnte nicht gelöscht werden:', id, e);
     }
     db().prepare('DELETE FROM upload WHERE id = ?').run(id);
     n++;
@@ -84,12 +85,13 @@ export function purgeCampaignData(ids: string[]) {
   deleteUploads(uploads, list);
   for (const id of list) {
     try {
-      const dir = path.join(UPLOAD_DIR, id);
+      const dir = insideDir(UPLOAD_DIR, id);
       if (fs.existsSync(dir) && !fs.readdirSync(dir).length) fs.rmdirSync(dir);
       // automatische Backups der Kampagne (die Rotation würde sie sonst nie entfernen)
-      fs.rmSync(path.join(BACKUP_DIR, id), { recursive: true, force: true });
+      const backups = insideDir(BACKUP_DIR, id);
+      if (backups !== path.resolve(BACKUP_DIR)) fs.rmSync(backups, { recursive: true, force: true });
     } catch (e) {
-      console.error(`Aufräumen der Dateien von ${id} fehlgeschlagen`, e);
+      console.error('Aufräumen der Dateien fehlgeschlagen:', id, e);
     }
   }
 }

@@ -24,6 +24,13 @@ import { useIntlLocale, useMsg, useT } from '@/i18n/client';
 import { BackupPanel, NotifyPanel } from './OpsPanels';
 import { LOCALES, LOCALE_NAMES, toLocale } from '@/i18n/core';
 
+/** Download-Link des Phasenberichts; die Sprache kommt nur aus der festen Liste (keine freien Werte in der URL) */
+function reportHref(campaignId: string, phase: number, lang: string): string {
+  const q = new URLSearchParams({ download: '1' });
+  if (lang === 'both' || (LOCALES as readonly string[]).includes(lang)) q.set('lang', lang);
+  return `/api/c/${encodeURIComponent(campaignId)}/report/${encodeURIComponent(String(phase))}?${q}`;
+}
+
 function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <label className="flex min-h-8 items-center gap-2.5 text-[15px]">
@@ -444,7 +451,7 @@ export function SettingsTab({ info }: { info: CampaignInfo }) {
                   ))}
                   <option value="both">{t('beide Sprachen')}</option>
                 </select>
-                <a className="btn btn-sm" href={`/api/c/${campaignId}/report/${reportPhase}?download=1${reportLang ? `&lang=${reportLang}` : ''}`}>
+                <a className="btn btn-sm" href={reportHref(campaignId, reportPhase, reportLang)}>
                   {t('Download .md')}
                 </a>
               </div>

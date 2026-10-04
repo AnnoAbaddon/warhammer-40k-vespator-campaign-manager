@@ -129,7 +129,7 @@ export function endedAt(campaignId: string): string | null {
 }
 
 /** Fällige Kampagnen bereinigen (vom Scheduler einmal je Durchlauf aufgerufen, idempotent) */
-export function runPrivacyCleanup(now = new Date(), onError: (id: string, e: unknown) => void = (id, e) => console.error(`Datenbereinigung ${id} fehlgeschlagen`, e)): string[] {
+export function runPrivacyCleanup(now = new Date(), onError: (id: string, e: unknown) => void = (id, e) => console.error('Datenbereinigung fehlgeschlagen:', id, e)): string[] {
   const cfg = privacySettings();
   if (!cfg.days || !(cfg.contact || cfg.notes || cfg.pulse)) return [];
   const done: string[] = [];
